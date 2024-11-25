@@ -1,0 +1,103 @@
+---
+title: "Time-series with a straightline fit using ggforce, and Piechart"
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(colorspace)
+library(cowplot)
+library(ggforce)
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+```
+
+
+**Problem 1:** For this problem, we will work with the `BA_degrees` dataset. It contains the proportions of Bachelor’s degrees awarded in the US between 1970 and 2015.
+
+```{r message = FALSE}
+BA_degrees <- read_csv("http://wilkelab.org/SDS375/datasets/BA_degrees.csv")
+BA_degrees
+```
+
+From the entire dataset, select a subset of 6 fields of study, using arbitrary criteria. Plot a time series of the proportion of degrees (column `perc`) in this field over time, using facets to show each field. Also plot a straight line fit to the data for each field. You should modify the order of facets to maximize figure appearance and memorability. What do you observe?
+
+**Hint:** To get started, see slides 34 to 44 in the class on getting things into the right order: https://wilkelab.org/DSC385/slides/getting-things-in-order.html#34
+
+```{r}
+# time series of the proportion of degrees over time
+BA_degrees %>%
+  filter(field %in% c("Agriculture and natural resources", "Biological and biomedical sciences", "Engineering", "Health professions and related programs", "Mathematics and statistics", "Physical sciences and science technologies")) %>%
+  mutate(field = fct_reorder(field, perc, function(x) { max(x) - min(x) })) %>%
+  ggplot(aes(year, perc)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(vars(field), nrow = 3) +
+  scale_y_continuous(
+    name = "Percentage (BA degrees awarded)"
+  ) +
+  scale_x_continuous(
+    name = "Year"
+  ) +
+  theme(strip.background = element_rect(fill = "yellow"),
+        strip.text = element_text(color = "red") 
+        )
+```
+
+*I picked the following academic fields to make the below observations based on the above faceted graphs:*
+
+* ***Agriculture and natural resources:*** *This field has not seen much difference in proportion between 1970 and 2010.*
+* ***Biological and biomedical sciences:*** *This field has a clear upward trend in the past few years.*
+* ***Engineering:*** *This field had downward between mid 1980's and late 2000's, however, we can see slight increase in the trend year-over-year in the past few years.*
+* ***Health professions and related programs:*** *This is the fastest growing academic field with steep upward trend in the past few years.*
+* ***Mathematics and statistics:*** *This field is showing slow downward trend over the past decades, however, there are more BA graduates in the past few years.*
+* ***Physical sciences and science technologies:*** *Similar to mathematics, this field also shows downward trend year-over-year.*
+
+
+**Problem 2:** We will work the `txhousing` dataset provided by **ggplot2**. See here for details: https://ggplot2.tidyverse.org/reference/txhousing.html
+
+Consider the number of houses sold in January 2015. There are records for 46 different cities:
+
+```{r}
+txhousing_jan_2015 <- txhousing %>% 
+  filter(year == 2015 & month == 1) %>% 
+  arrange(desc(sales))
+
+print(txhousing_jan_2015, n = nrow(txhousing_jan_2015))
+
+```
+
+If you wanted to visualize the relative proportion of sales in these different cities, which plot would be most appropriate? A pie chart, a stacked bar chart, or side-by-side bars? Please explain your reasoning. You do not have to make the chart.
+
+**Answer:** *The dataset contains the housing sales data from 46 cities in Texas. Not matter which plot we use (stacked bar, side-by-side bar, pie-chart), the graphs generated would not be visually appealing and easy to understand. It would make sense to show sales of top N cities and lump together the rest of the sales data from different cities. We could then use pie-chart or side-by-side chart to show relative proportion of sales.*
+
+
+**Problem 3:** Now make a pie chart of the `txhousing_jan_2015` dataset, but show only the four cities with the most sales, plus all others lumped together into "Other". (The code to prepare this lumped dataset has been provided for your convenience.) Make sure the pie slices are arranged in a reasonable order. Choose a reasonable color scale and a clean theme that avoids distracting visual elements.
+
+```{r}
+# data preparation
+top_four <- txhousing_jan_2015$sales[1:4]
+
+txhousing_lumped <- txhousing_jan_2015 %>%
+  mutate(city = ifelse(sales %in% top_four, city, "Other")) %>% 
+  group_by(city) %>%
+  summarize(sales = sum(sales))
+
+# ggplot for pie-chart
+ggplot(txhousing_lumped) +
+  aes(
+    x0 = 0, y0 = 0,
+    r0 = 0, r = 1,
+    amount = sales,
+    fill = city
+  ) +
+  geom_arc_bar(stat = "pie") +
+  coord_fixed() +
+  xlim(-1.0, 1.0) +
+  ylim(-1.1, 1.4) +
+  theme_void() +
+  theme(
+    strip.text = element_blank(),
+    strip.background = element_blank()
+  )
+```
+
