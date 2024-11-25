@@ -1,0 +1,34 @@
+---
+title: "Histogram"
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(ggplot2)
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+```
+
+In this homework you will be working with the `chickwts` dataset built into R. This data set contains weight measurements of chicks fed on different food sources to assess their effectiveness on growth rate.
+
+```{r}
+head(chickwts)
+```
+
+**Problem 1:** Use ggplot to make a histogram of the `weight` column. Manually choose appropriate values for `binwidth` and `center`. Explain your choice of values in 2-3 sentences.
+
+```{r}
+ggplot(chickwts, aes(weight)) +
+  geom_histogram(binwidth = 25, center = 112.5)
+```
+
+*I chose binwidth of 25 because it was able to capture the different places in the distribution where major concentration of the weights belong to. Using smaller than 20 binwidth was causing spikes and empty bins in some places. Similarly, using values greater than 40 was not highlighting the weight distribution correctly. Since the smallest weight in the dataset is 108, and with binwidth of 25 I chose, I needed the center between 100 and 125 for the first bin, that is why I used 112.5 as the center.*
+
+
+**Problem 2:** Modify the plot from Problem 1 to show one panel per feed. Hint: Use `facet_wrap()`.
+
+```{r}
+ggplot(chickwts, aes(weight)) +
+  geom_histogram(binwidth = 25, center = 112.5) +
+  facet_wrap(vars(feed))
+```
+
